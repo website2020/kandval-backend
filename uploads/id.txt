@@ -1,0 +1,4 @@
+UserName=hp
+ComputerName=LAPTOP-LEJMSSQJ
+Domain=LAPTOP-LEJMSSQJ
+DiskSerial=7A99385B
