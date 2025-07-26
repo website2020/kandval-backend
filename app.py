@@ -68,15 +68,18 @@ def send_email(name, email, filepath):
         file_name = os.path.basename(filepath)
         msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)
 
-    try:
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        print("✅ Email успешно отправлен!")
-        return True
-    except Exception as e:
-        print(f"❌ Ошибка отправки email: {e}")
-        return False
+try:
+    print(f"📡 Подключение к SMTP: {SMTP_SERVER}:{SMTP_PORT}")
+    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+        print("🔐 Авторизация...")
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        print("✉️ Отправка письма...")
+        server.send_message(msg)
+    print("✅ Email успешно отправлен!")
+    return True
+except Exception as e:
+    print(f"❌ Ошибка при подключении или отправке SMTP: {e}")
+    return False
 
 if __name__ == '__main__':
     app.run(debug=True)
