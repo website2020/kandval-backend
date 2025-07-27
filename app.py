@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from flask import Flask, render_template, request
 from dotenv import load_dotenv
 
-load_dotenv()  # Загружаем переменные из .env
+load_dotenv()  #________________ Загружаем переменные из .env
 
 print("SMTP_USER =", os.getenv('SMTP_USER'))
 print("SMTP_PASSWORD =", os.getenv('SMTP_PASSWORD'))
@@ -25,7 +25,7 @@ def index():
         name = request.form.get('name', '')
         email = request.form.get('email', '')
         message = request.form.get('message', '')
-        file = request.files.get('file')  # 👈 получаем файл
+        file = request.files.get('file')  #_________ 👈 получаем файл
 
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
@@ -33,7 +33,7 @@ def index():
         msg['To'] = EMAIL_TO
         msg.set_content(f"Имя: {name}\nEmail: {email}\nСообщение: {message}")
 
-        # 📎 прикрепляем файл, если он есть
+        #____________________ 📎 прикрепляем файл, если он есть
         if file and file.filename:
             file_data = file.read()
             msg.add_attachment(file_data,
@@ -46,10 +46,10 @@ def index():
                 server.login(SMTP_USER, SMTP_PASSWORD)
                 server.send_message(msg)
             print("✅ Email успешно отправлен!")
-            return "Форма успешно отправлена!"
+            return "Заявка успешно отправлена!"
         except Exception as e:
             print(f"❌ Ошибка отправки email: {e}")
-            return "Ошибка отправки формы"
+            return "Ошибка отправки Заявки"
 
     return render_template('form.html')
 
