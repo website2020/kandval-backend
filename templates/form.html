@@ -1,17 +1,25 @@
-<!-- templates/form.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Форма</title>
+    <meta charset="UTF-8">
+    <title>Форма обратной связи</title>
 </head>
 <body>
-  <h1>Обратная связь</h1>
-  <form method="post">
-    <label>Имя: <input type="text" name="name"></label><br>
-    <label>Email: <input type="email" name="email"></label><br>
-    <label>Сообщение: <textarea name="message"></textarea></label><br>
-    <button type="submit">Отправить</button>
-  </form>
+    <h1>Форма обратной связи</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label for="name">Имя:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="message">Сообщение:</label><br>
+        <textarea id="message" name="message" rows="5" required></textarea><br><br>
+
+        <label for="file">Файл (необязательно):</label><br>
+        <input type="file" id="file" name="file"><br><br>
+
+        <button type="submit">Отправить</button>
+    </form>
 </body>
 </html>
