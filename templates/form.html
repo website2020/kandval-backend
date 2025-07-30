@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заказать рабочую версию</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    padding: 20px;
+    background-color: #f7f7f7;
+  }
+
+  form {
+    width: 90%;
+    max-width: 500px;
+    margin: auto;
+    padding: 24px;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+
+  input, textarea, button {
+    width: 100%;
+    padding: 14px 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+  }
+
+  input:focus, textarea:focus {
+    border-color: #007BFF;
+    outline: none;
+  }
+
+  button {
+    background-color: #007BFF;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  #fileError {
+    color: red;
+    font-size: 0.9em;
+    margin-top: -4px;
+  }
+
+  /* 🧊 Модальное окно */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 24px 28px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    position: relative;
+    transform: translateY(-30px);
+    opacity: 0;
+    animation: slideUp 0.3s ease forwards;
+  }
+
+  .close {
+    color: #aaa;
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .close:hover {
+    color: #000;
+  }
+
+  /* 🎞 Анимации */
+  @keyframes fadeIn {
+    from { background-color: rgba(0,0,0,0); }
+    to   { background-color: rgba(0,0,0,0.4); }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(-30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* 📱 Адаптация */
+  @media (max-width: 600px) {
+    body {
+      padding: 10px;
+    }
+    form {
+      padding: 18px;
+    }
+    input, textarea, button {
+      font-size: 16px;
+      padding: 12px;
+    }
+    .modal-content {
+      margin: 30% auto;
+      font-size: 15px;
+    }
+  }
+</style>
+
+</head>
+<body>
+
+<h2 style="text-align:center;">Заказать рабочую версию</h2>
+
+<form id="orderForm" action="/submit" method="post" enctype="multipart/form-data">
+  <label for="name">Имя *</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="email">Email *</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="message">Сообщение (необязательно)</label>
+  <textarea id="message" name="message" rows="4"></textarea>
+
+  <label for="file">Загрузите файл (id.txt) *</label>
+  <input type="file" id="file" name="file" accept=".txt" required>
+  <span id="fileError"></span>
+
+  <button type="submit">Заказать рабочую версию</button>
+</form>
+
+<!-- Модальное окно -->
+<div id="errorModal" class="modal">
+  <div class="modal-content animate">
+    <span class="close" id="closeModal">&times;</span>
+    <p id="modalText" style="margin-bottom: 1em; color: #c00; font-weight: bold;"></p>
+    <p>
+      Рекомендация:<br>
+      Удалить файл <code>id.txt</code>.<br>
+      Запустить <code>test.vbe</code>.<br>
+      Дождаться завершения работы.<br>
+      Повторить заказ с новым <code>id.txt</code>.<br>
+    </p>
+  </div>
+</div>
+
+
+  
+
+
+
+<script>
+let fileIsValid = false;
+
+document.getElementById("orderForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const fileInput = document.getElementById("file");
+  const fileError = document.getElementById("fileError");
+  const file = fileInput.files[0];
+  const errorMessage = "Выберите файл id.txt";
+
+  fileError.textContent = "";
+
+if (!file || file.name !== "id.txt") {
+  if (fileError.textContent !== errorMessage) {
+    fileError.textContent = errorMessage;
+  }
+  return;
+}
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const content = e.target.result.replace(/\r/g, '');
+    const lines = content.split('\n');
+
+    const requiredPrefixes = [
+      { prefix: "UserName=", length: 9 },
+      { prefix: "ComputerName=", length: 13 },
+      { prefix: "Domain=", length: 7 },
+      { prefix: "DiskSerial=", length: 11 }
+    ];
+
+    for (let i = 0; i < requiredPrefixes.length; i++) {
+      const line = lines[i] || "";
+      const required = requiredPrefixes[i];
+
+      const actual = line.slice(0, required.prefix.length);
+      const expected = required.prefix;
+
+      if (actual !== expected) {
+        showModal("Ошибка в id.txt: нарушена структура файла");
+        return;
+      }
+    }
+
+    const computerNameValue = lines[1].slice(13);
+    const diskSerialValue = lines[3].slice(11);
+
+    if (computerNameValue === "" || computerNameValue.includes(" ")) {
+      showModal("Ошибка в id.txt: не определено имя компьютера.");
+      return;
+    }
+
+    if (diskSerialValue === "" || diskSerialValue.includes(" ")) {
+      showModal("Ошибка в id.txt: не определён серийный номер диска.");
+      return;
+    }
+
+    fileIsValid = true;
+    document.getElementById("orderForm").removeEventListener("submit", arguments.callee);
+    document.getElementById("orderForm").submit();
+  };
+
+  reader.readAsText(file);
+});
+
+// ⬇️ Модальное окно с переменной
+function showModal(message = "Произошла ошибка") {
+  document.getElementById("modalText").textContent = message;
+  document.getElementById("errorModal").style.display = "block";
+}
+
+// Закрытие окна
+document.getElementById("closeModal").onclick = function() {
+  document.getElementById("errorModal").style.display = "none";
+};
+
+window.onclick = function(event) {
+  if (event.target === document.getElementById("errorModal")) {
+    document.getElementById("errorModal").style.display = "none";
+  }
+};
+</script>
+
+
+
+
+
+
+
+</body>
+</html>
+
+
+
