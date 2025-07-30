@@ -2,24 +2,24 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Форма для обратной связи </title>
+    <title>Заказать рабочую версию</title>
 </head>
 <body>
-    <h1>Форма для обратной связи</h1>
+    <h1>Заказать рабочую версию</h1>
     <form method="post" enctype="multipart/form-data">
-        <label for="name">Имя:</label><br>
+        <label for="name">Имя Фамилия *</label><br>
         <input type="text" id="name" name="name" required><br><br>
 
-        <label for="email">Email:</label><br>
+        <label for="email">Email *</label><br>
         <input type="email" id="email" name="email" required><br><br>
 
         <label for="message">Сообщение:</label><br>
-        <textarea id="message" name="message" rows="5" required></textarea><br><br>
+        <textarea id="message" name="message" rows="5"></textarea><br><br>
 
-        <label for="file">Файл (обязательно):</label><br>
-        <input type="file" id="file" name="file"><br><br>
+        <label for="file">Файл (Загрузите id.txt) *:</label><br>
+        <input type="file" id="file" name="file" required><br><br>
 
-        <button type="submit">Отправить заявку</button>
+        <button type="submit">Отправить</button>
     </form>
 </body>
 </html>
