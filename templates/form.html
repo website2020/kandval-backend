@@ -4,134 +4,79 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Заказать рабочую версию</title>
-<style>
-  body {
-    font-family: "Segoe UI", sans-serif;
-    padding: 20px;
-    background-color: #f7f7f7;
-  }
-  form {
-    width: 90%;
-    max-width: 500px;
-    margin: auto;
-    padding: 24px;
-    background-color: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease;
-  }
-  input, textarea, button {
-    width: 100%;
-    padding: 14px 12px;
-    margin: 10px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease;
-  }
-  input:focus, textarea:focus {
-    border-color: #007BFF;
-    outline: none;
-  }
-  button {
-    background-color: #007BFF;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  }
-  #fileError {
-    color: red;
-    font-size: 0.9em;
-    margin-top: -4px;
-  }
-  /* 🧊 Модальное окно */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.4);
-    animation: fadeIn 0.3s ease;
-  }
-  .modal-content {
-    background-color: #fff;
-    margin: 10% auto;
-    padding: 24px 28px;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    position: relative;
-    transform: translateY(-30px);
-    opacity: 0;
-    animation: slideUp 0.3s ease forwards;
-  }
-  .close {
-    color: #aaa;
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-  .close:hover {
-    color: #000;
-  }
-  /* 🎞 Анимации */
-  @keyframes fadeIn {
-    from { background-color: rgba(0,0,0,0); }
-    to   { background-color: rgba(0,0,0,0.4); }
-  }
-  @keyframes slideUp {
-    from {
-      transform: translateY(-30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  /* 📱 Адаптация */
-  @media (max-width: 600px) {
+  <style>
     body {
-      padding: 10px;
+      font-family: "Segoe UI", sans-serif;
+      padding: 20px;
+      background-color: #f7f7f7;
     }
     form {
-      padding: 18px;
+      width: 90%;
+      max-width: 500px;
+      margin: auto;
+      padding: 24px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
     input, textarea, button {
+      width: 100%;
+      padding: 14px 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
       font-size: 16px;
-      padding: 12px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #fileError {
+      color: red;
+      font-size: 0.9em;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.4);
     }
     .modal-content {
-      margin: 30% auto;
-      font-size: 15px;
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 24px 28px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      position: relative;
     }
-  }
-</style>
-
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #000;
+    }
+  </style>
 </head>
 <body>
-  
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-  <a href="https://kandval.com" style="font-size: 16px; text-decoration: none;">← Назад на сайт</a>
-  <a href="https://kandval.com" style="font-size: 24px; text-decoration: none;">✕</a>
-</div>
-
-
 
 <h2 style="text-align:center;">Заказать рабочую версию</h2>
+
 <form id="orderForm" action="/" method="post" enctype="multipart/form-data">
   <label for="name">Имя *</label>
   <input type="text" id="name" name="name" required>
@@ -144,88 +89,98 @@
   <span id="fileError"></span>
   <button type="submit">Заказать рабочую версию</button>
 </form>
-<!-- Модальное окно -->
+
+<!-- 🧊 Модальное окно -->
 <div id="errorModal" class="modal">
-  <div class="modal-content animate">
+  <div class="modal-content">
     <span class="close" id="closeModal">&times;</span>
     <p id="modalText" style="margin-bottom: 1em; color: #c00; font-weight: bold;"></p>
-    <p>
-      Рекомендация:<br>
-      Удалить файл <code>id.txt</code>.<br>
-      Запустить <code>test.vbe</code>.<br>
-      Дождаться завершения работы.<br>
-      Повторить заказ с новым <code>id.txt</code>.<br>
-    </p>
+    <p id="recommendationText" style="margin-top: 0.5em;"></p>
   </div>
 </div>
+
 <script>
-let fileIsValid = false;
-document.getElementById("orderForm").addEventListener("submit", function(event) {
-  event.preventDefault();
-  const fileInput = document.getElementById("file");
-  const fileError = document.getElementById("fileError");
-  const file = fileInput.files[0];
-  const errorMessage = "Выберите файл id.txt";
-  fileError.textContent = "";
-if (!file || file.name !== "id.txt") {
-  if (fileError.textContent !== errorMessage) {
-    fileError.textContent = errorMessage;
-  }
-  return;
-}
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const content = e.target.result.replace(/\r/g, '');
-    const lines = content.split('\n');
-    const requiredPrefixes = [
-      { prefix: "UserName=", length: 9 },
-      { prefix: "ComputerName=", length: 13 },
-      { prefix: "Domain=", length: 7 },
-      { prefix: "DiskSerial=", length: 11 }
-    ];
-    for (let i = 0; i < requiredPrefixes.length; i++) {
-      const line = lines[i] || "";
-      const required = requiredPrefixes[i];
-      const actual = line.slice(0, required.prefix.length);
-      const expected = required.prefix;
-      if (actual !== expected) {
-        showModal("Ошибка в id.txt: нарушена структура файла");
+  // Проверка структуры id.txt
+  document.getElementById("orderForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    const fileInput = document.getElementById("file");
+    const fileError = document.getElementById("fileError");
+    const file = fileInput.files[0];
+    fileError.textContent = "";
+    if (!file || file.name !== "id.txt") {
+      fileError.textContent = "Выберите файл id.txt";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result.replace(/\r/g, '');
+      const lines = content.split('\n');
+      const requiredPrefixes = [
+        { prefix: "UserName=", length: 9 },
+        { prefix: "ComputerName=", length: 13 },
+        { prefix: "Domain=", length: 7 },
+        { prefix: "DiskSerial=", length: 11 }
+      ];
+      for (let i = 0; i < requiredPrefixes.length; i++) {
+        const line = lines[i] || "";
+        const required = requiredPrefixes[i];
+        if (line.slice(0, required.prefix.length) !== required.prefix) {
+          showModal("Ошибка в id.txt: нарушена структура файла", `
+            Рекомендация:<br>
+            Удалите файл <code>id.txt</code>.<br>
+            Запустите <code>test.vbe</code>.<br>
+            Дождитесь завершения работы.<br>
+            Повторите заказ с новым <code>id.txt</code>.<br>`);
+          return;
+        }
+      }
+      const computerNameValue = lines[1].slice(13);
+      const diskSerialValue = lines[3].slice(11);
+      if (computerNameValue === "" || computerNameValue.includes(" ")) {
+        showModal("Ошибка в id.txt: не определено имя компьютера", "Проверьте, корректно ли запущен файл test.vbe.");
         return;
       }
-    }
-    const computerNameValue = lines[1].slice(13);
-    const diskSerialValue = lines[3].slice(11);
-    if (computerNameValue === "" || computerNameValue.includes(" ")) {
-      showModal("Ошибка в id.txt: не определено имя компьютера.");
-      return;
-    }
-    if (diskSerialValue === "" || diskSerialValue.includes(" ")) {
-      showModal("Ошибка в id.txt: не определён серийный номер диска.");
-      return;
-    }
-    fileIsValid = true;
-    document.getElementById("orderForm").removeEventListener("submit", arguments.callee);
-    document.getElementById("orderForm").submit();
-  };
-  reader.readAsText(file);
-});
-// ⬇️ Модальное окно с переменной
-function showModal(message = "Произошла ошибка") {
-  document.getElementById("modalText").textContent = message;
-  document.getElementById("errorModal").style.display = "block";
-}
-// Закрытие окна
-document.getElementById("closeModal").onclick = function() {
-  document.getElementById("errorModal").style.display = "none";
-};
-window.onclick = function(event) {
-  if (event.target === document.getElementById("errorModal")) {
-    document.getElementById("errorModal").style.display = "none";
+      if (diskSerialValue === "" || diskSerialValue.includes(" ")) {
+        showModal("Ошибка в id.txt: не определён серийный номер диска", "Убедитесь, что диск подключён и повторите попытку.");
+        return;
+      }
+      // Всё в порядке — отправляем форму
+      document.getElementById("orderForm").submit();
+    };
+    reader.readAsText(file);
+  });
+
+  // 📦 Функция для отображения модального окна
+  function showModal(message, recommendation) {
+    document.getElementById("modalText").textContent = message;
+    document.getElementById("recommendationText").innerHTML = recommendation;
+    document.getElementById("errorModal").style.display = "block";
   }
-};
+
+  // 🔁 Динамическое сообщение от Flask
+  const status = "{{ status | default('') }}";
+  const message = "{{ message | default('') }}";
+  const recommendation = "{{ recommendation | default('') }}";
+  if (status) {
+    showModal(message, recommendation);
+  }
+
+  // ❌ Закрытие окна
+  document.getElementById("closeModal").onclick = function() {
+    document.getElementById("errorModal").style.display = "none";
+    if (status === 'success') {
+      window.location.href = "https://kandval.com";
+    }
+  };
+  window.onclick = function(event) {
+    if (event.target === document.getElementById("errorModal")) {
+      document.getElementById("errorModal").style.display = "none";
+      if (status === 'success') {
+        window.location.href = "https://kandval.com";
+      }
+    }
+  };
 </script>
+
 </body>
 </html>
-
-
-

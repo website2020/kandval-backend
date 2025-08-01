@@ -25,7 +25,7 @@ def index():
         name = request.form.get('name', '')
         email = request.form.get('email', '')
         message = request.form.get('message', '')
-        file = request.files.get('file')  #_________ 👈 получаем файл
+        file = request.files.get('file')
 
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
@@ -33,7 +33,6 @@ def index():
         msg['To'] = EMAIL_TO
         msg.set_content(f"Имя: {name}\nEmail: {email}\nСообщение: {message}")
 
-        #____________________ 📎 прикрепляем файл, если он есть
         if file and file.filename:
             file_data = file.read()
             msg.add_attachment(file_data,
@@ -45,13 +44,20 @@ def index():
             with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
                 server.login(SMTP_USER, SMTP_PASSWORD)
                 server.send_message(msg)
-            print("✅ Email успешно отправлен!")
-            return "Заявка успешно отправлена!"
-        except Exception as e:
-            print(f"❌ Ошибка отправки email: {e}")
-            return "Ошибка отправки Заявки"
 
-    return render_template('form.html')
+            return render_template("form.html",
+                                   status="success",
+                                   message="Заявка успешно отправлена!",
+                                   recommendation="Скоро вы получите письмо с инструкциями.")
+
+        except Exception as e:
+            return render_template("form.html",
+                                   status="error",
+                                   message="Ошибка отправки заявки",
+                                   recommendation="Проверьте подключение к интернету или попробуйте позже.")
+
+    # При первом заходе на страницу (GET)
+    return render_template("form.html")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
