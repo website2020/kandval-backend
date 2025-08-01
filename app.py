@@ -27,6 +27,13 @@ def index():
         message = request.form.get('message', '')
         file = request.files.get('file')
 
+        # Одна переменная для всех рекомендаций
+        recommendation_fix = '''Рекомендация:<br>
+Удалить файл <code>id.txt</code>.<br>
+Запустить <code>test.vbe</code>.<br>
+Дождаться завершения работы.<br>
+Повторить заказ с новым <code>id.txt</code>.'''
+
         # Проверка файла id.txt
         if not file or file.filename != 'id.txt':
             return render_template("form.html",
@@ -49,11 +56,7 @@ def index():
                 return render_template("form.html",
                                        status="error",
                                        message="Ошибка в id.txt: нарушена структура файла.",
-                                       recommendation='''Рекомендация:<br>
-Удалить файл <code>id.txt</code>.<br>
-Запустить <code>test.vbe</code>.<br>
-Дождаться завершения работы.<br>
-Повторить заказ с новым <code>id.txt</code>.''')
+                                       recommendation=recommendation_fix)
 
         computer_name = lines[1][13:].strip()
         disk_serial = lines[3][11:].strip()
@@ -62,13 +65,13 @@ def index():
             return render_template("form.html",
                                    status="error",
                                    message="Ошибка в id.txt: не определено имя компьютера.",
-                                   recommendation="Проверьте, чтобы строка <code>ComputerName=</code> не была пустой и не содержала пробелов.")
+                                   recommendation=recommendation_fix)
 
         if not disk_serial or ' ' in disk_serial:
             return render_template("form.html",
                                    status="error",
                                    message="Ошибка в id.txt: не определён серийный номер диска.",
-                                   recommendation="Убедитесь, что строка <code>DiskSerial=</code> корректна и не содержит пробелов.")
+                                   recommendation=recommendation_fix)
 
         # После всех проверок — шлём письмо
         msg = EmailMessage()
@@ -99,9 +102,9 @@ def index():
                                    message="Ошибка отправки заявки",
                                    recommendation="Проверьте подключение к интернету или попробуйте позже.")
 
-    
     # При первом заходе на страницу (GET)
     return render_template("form.html")
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

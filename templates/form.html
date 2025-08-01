@@ -73,9 +73,9 @@
     .close {
       color: #aaa;
       position: absolute;
-      top: 12px;
+      top: 10px;
       right: 16px;
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
       cursor: pointer;
     }
@@ -148,9 +148,7 @@ document.getElementById("orderForm").addEventListener("submit", function(event) 
   const errorMessage = "Выберите файл id.txt";
   fileError.textContent = "";
   if (!file || file.name !== "id.txt") {
-    if (fileError.textContent !== errorMessage) {
-      fileError.textContent = errorMessage;
-    }
+    fileError.textContent = errorMessage;
     return;
   }
   const reader = new FileReader();
@@ -167,18 +165,25 @@ document.getElementById("orderForm").addEventListener("submit", function(event) 
       const line = lines[i] || "";
       const required = requiredPrefixes[i];
       if (!line.startsWith(required.prefix)) {
-        showModal("Ошибка в id.txt: нарушена структура файла");
+        showModal("Ошибка в id.txt: нарушена структура файла", `
+          Рекомендация:<br>
+          Удалите <code>id.txt</code>.<br>
+          Запустите <code>test.vbe</code>.<br>
+          Дождитесь завершения работы.<br>
+          Повторите заказ с новым <code>id.txt</code>.`);
         return;
       }
     }
-    const computerNameValue = lines[1].slice(13);
-    const diskSerialValue = lines[3].slice(11);
+    const computerNameValue = lines[1].slice(13).trim();
+    const diskSerialValue = lines[3].slice(11).trim();
     if (computerNameValue === "" || computerNameValue.includes(" ")) {
-      showModal("Ошибка в id.txt: не определено имя компьютера.");
+      showModal("Ошибка в id.txt: не определено имя компьютера.", `
+        Убедитесь, что строка <code>ComputerName=</code> не пуста и не содержит пробелов.`);
       return;
     }
     if (diskSerialValue === "" || diskSerialValue.includes(" ")) {
-      showModal("Ошибка в id.txt: не определён серийный номер диска.");
+      showModal("Ошибка в id.txt: не определён серийный номер диска.", `
+        Убедитесь, что строка <code>DiskSerial=</code> корректна и не содержит пробелов.`);
       return;
     }
     fileIsValid = true;
@@ -189,9 +194,9 @@ document.getElementById("orderForm").addEventListener("submit", function(event) 
 });
 
 // 🧊 Локальное showModal
-function showModal(message = "Произошла ошибка") {
+function showModal(message = "Произошла ошибка", recommendation = "Проверьте содержимое файла.") {
   document.getElementById("modalText").textContent = message;
-  document.getElementById("recommendationText").innerHTML = "Проверьте содержимое файла.";
+  document.getElementById("recommendationText").innerHTML = recommendation;
   document.getElementById("errorModal").style.display = "block";
 }
 
@@ -205,22 +210,25 @@ if (status) {
   document.getElementById('modalText').textContent = message;
   document.getElementById('recommendationText').innerHTML = recommendation;
   modal.style.display = 'block';
+}
 
-  document.getElementById("closeModal").onclick = function() {
+// ✅ Общее закрытие модалки (клик по кресту или вне окна)
+const modal = document.getElementById('errorModal');
+document.getElementById("closeModal").onclick = function() {
+  modal.style.display = "none";
+  if (status === 'success') {
+    window.location.href = "https://kandval.com";
+  }
+};
+window.onclick = function(event) {
+  if (event.target === modal) {
     modal.style.display = "none";
     if (status === 'success') {
       window.location.href = "https://kandval.com";
     }
-  };
-  window.onclick = function(event) {
-    if (event.target === modal) {
-      modal.style.display = "none";
-      if (status === 'success') {
-        window.location.href = "https://kandval.com";
-      }
-    }
-  };
-}
+  }
+};
 </script>
 </body>
 </html>
+
