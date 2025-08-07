@@ -128,7 +128,7 @@
   <button type="submit">Заказать рабочую версию</button>
 </form>
 
-<!-- ✅ Модальное окно -->
+<!-- Модалка -->
 <div id="errorModal" class="modal">
   <div class="modal-content animate">
     <span class="close" id="closeModal">&times;</span>
@@ -138,7 +138,6 @@
 </div>
 
 <script>
-// ✅ Универсальная рекомендация
 const universalRecommendation = `
   Рекомендация:<br>
   Удалите <code>id.txt</code>.<br>
@@ -146,17 +145,8 @@ const universalRecommendation = `
   Дождитесь завершения работы.<br>
   Повторите заказ с новым <code>id.txt</code>.`;
 
-// 🔐 Проверка структуры id.txt + проверка интернета
 document.getElementById("orderForm").addEventListener("submit", function(event) {
   event.preventDefault();
-
-  if (!navigator.onLine) {
-    showModal(
-      "Нет подключения к интернету.",
-      "Пожалуйста, подключитесь к сети и повторите отправку формы."
-    );
-    return;
-  }
 
   const fileInput = document.getElementById("file");
   const fileError = document.getElementById("fileError");
@@ -198,9 +188,13 @@ document.getElementById("orderForm").addEventListener("submit", function(event) 
       return;
     }
 
-    // ✅ Отправляем через fetch
+    // ✅ Отправка
     const form = document.getElementById("orderForm");
     const formData = new FormData(form);
+    const submitButton = form.querySelector("button");
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Отправка...";
 
     fetch("/", {
       method: "POST",
@@ -209,37 +203,44 @@ document.getElementById("orderForm").addEventListener("submit", function(event) 
     .then(response => response.json())
     .then(data => {
       showModal(data.message, data.recommendation);
-      if (data.status === 'success') {
-        setTimeout(() => {
-          window.location.href = "https://kandval.com";
-        }, 3000);
-      }
+      submitButton.disabled = false;
+      submitButton.textContent = "Заказать рабочую версию";
+
+      window.shouldRedirectAfterClose = (data.status === 'success');
     })
     .catch(error => {
       showModal("Ошибка отправки запроса.", "Проверьте подключение к интернету и попробуйте снова.");
+      submitButton.disabled = false;
+      submitButton.textContent = "Заказать рабочую версию";
+      window.shouldRedirectAfterClose = false;
     });
   };
   reader.readAsText(file);
 });
 
-// 🧊 showModal без изменений
+// 🧊 Модалка
 function showModal(message = "Произошла ошибка", recommendation = "Проверьте содержимое файла.") {
   document.getElementById("modalText").textContent = message;
   document.getElementById("recommendationText").innerHTML = recommendation;
   document.getElementById("errorModal").style.display = "block";
 
-  // ✅ Обработчики закрытия
   document.getElementById("closeModal").onclick = function() {
     document.getElementById("errorModal").style.display = "none";
+    if (window.shouldRedirectAfterClose) {
+      window.location.href = "https://kandval.com";
+    }
   };
   window.onclick = function(event) {
     if (event.target === document.getElementById("errorModal")) {
       document.getElementById("errorModal").style.display = "none";
+      if (window.shouldRedirectAfterClose) {
+        window.location.href = "https://kandval.com";
+      }
     }
   };
 }
 
-// 🧩 Серверный статус — оставлен на случай, если вдруг придёт через render_template (резерв)
+// 🔁 Резерв для render_template, если сервер когда-то вернёт HTML, а не JSON
 const status = "{{ status | default('') }}";
 const message = "{{ message | default('') }}";
 const recommendation = "{{ recommendation | default('') }}";
@@ -250,16 +251,18 @@ if (status) {
   document.getElementById('recommendationText').innerHTML = recommendation;
   modal.style.display = 'block';
 
+  window.shouldRedirectAfterClose = (status === 'success');
+
   document.getElementById("closeModal").onclick = function() {
     modal.style.display = "none";
-    if (status === 'success') {
+    if (window.shouldRedirectAfterClose) {
       window.location.href = "https://kandval.com";
     }
   };
   window.onclick = function(event) {
     if (event.target === modal) {
       modal.style.display = "none";
-      if (status === 'success') {
+      if (window.shouldRedirectAfterClose) {
         window.location.href = "https://kandval.com";
       }
     }
@@ -269,4 +272,3 @@ if (status) {
 
 </body>
 </html>
-
