@@ -4,19 +4,24 @@ from email.message import EmailMessage
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
-load_dotenv()  #________________ Загружаем переменные из .env
+load_dotenv()  # Загружаем переменные из .env
 
 print("SMTP_USER =", os.getenv('SMTP_USER'))
 print("SMTP_PASSWORD =", os.getenv('SMTP_PASSWORD'))
-
 
 app = Flask(__name__)
 
 SMTP_SERVER = 'smtp.zoho.eu'
 SMTP_PORT = 465
 SMTP_USER = os.getenv('SMTP_USER')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')  # Секрет из .env
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
 EMAIL_TO = 'info@kandval.com'
+
+ERROR_MSG = {
+    "status": "error",
+    "message": "Use the door, not the window.",
+    "recommendation": ""
+}
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -26,18 +31,9 @@ def index():
         message = request.form.get('message', '')
         file = request.files.get('file')
 
-        recommendation_fix = '''Рекомендация:<br>
-Удалить файл <code>id.txt</code>.<br>
-Запустить <code>test.vbe</code>.<br>
-Дождаться завершения работы.<br>
-Повторить заказ с новым <code>id.txt</code>.'''
-
+        # Проверка, что есть файл и имя файла id.txt
         if not file or file.filename != 'id.txt':
-            return jsonify(
-                status="error",
-                message="Неверное имя файла. Ожидается id.txt.",
-                recommendation="Проверьте, что вы выбрали файл <code>id.txt</code> и попробуйте снова."
-            )
+            return jsonify(ERROR_MSG)
 
         content = file.read().decode(errors='ignore').replace('\r', '')
         lines = content.split('\n')
@@ -49,31 +45,22 @@ def index():
             ("DiskSerial=", 11)
         ]
 
+        # Проверка структуры файла
         for i, (prefix, length) in enumerate(required_lines):
             if i >= len(lines) or not lines[i].startswith(prefix):
-                return jsonify(
-                    status="error",
-                    message="Ошибка в id.txt: нарушена структура файла.",
-                    recommendation=recommendation_fix
-                )
+                return jsonify(ERROR_MSG)
 
         computer_name = lines[1][13:].strip()
         disk_serial = lines[3][11:].strip()
 
+        # Проверяем, что computer_name и disk_serial не пустые и не содержат пробелов
         if not computer_name or ' ' in computer_name:
-            return jsonify(
-                status="error",
-                message="Ошибка в id.txt: не определено имя компьютера.",
-                recommendation=recommendation_fix
-            )
+            return jsonify(ERROR_MSG)
 
         if not disk_serial or ' ' in disk_serial:
-            return jsonify(
-                status="error",
-                message="Ошибка в id.txt: не определён серийный номер диска.",
-                recommendation=recommendation_fix
-            )
+            return jsonify(ERROR_MSG)
 
+        # Если все проверки пройдены — формируем письмо и отправляем
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
         msg['From'] = SMTP_USER
@@ -95,14 +82,14 @@ def index():
                 recommendation="Скоро вы получите письмо с инструкциями."
             )
 
-        except Exception as e:
+        except Exception:
             return jsonify(
                 status="error",
                 message="Ошибка отправки заявки",
                 recommendation="Проверьте подключение к интернету или попробуйте позже."
             )
 
-     # При первом заходе на страницу (GET)
+    # При GET запросе — просто вернуть форму
     return render_template("form.html")
 
 if __name__ == '__main__':

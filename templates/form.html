@@ -148,6 +148,18 @@ const universalRecommendation = `
 document.getElementById("orderForm").addEventListener("submit", function(event) {
   event.preventDefault();
 
+  const emailInput = document.querySelector('input[name="email"]');
+  const emailValue = emailInput.value.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(emailValue)) {
+    showModal(
+      "Некорректный email",
+      "Пожалуйста, введите корректный адрес электронной почты (например: name@example.com)."
+    );
+    return;
+  }
+
   const fileInput = document.getElementById("file");
   const fileError = document.getElementById("fileError");
   const file = fileInput.files[0];
