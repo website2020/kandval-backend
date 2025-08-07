@@ -227,6 +227,16 @@ function showModal(message = "Произошла ошибка", recommendation =
   document.getElementById("modalText").textContent = message;
   document.getElementById("recommendationText").innerHTML = recommendation;
   document.getElementById("errorModal").style.display = "block";
+
+  // ✅ Обработчики закрытия
+  document.getElementById("closeModal").onclick = function() {
+    document.getElementById("errorModal").style.display = "none";
+  };
+  window.onclick = function(event) {
+    if (event.target === document.getElementById("errorModal")) {
+      document.getElementById("errorModal").style.display = "none";
+    }
+  };
 }
 
 // 🧩 Серверный статус — оставлен на случай, если вдруг придёт через render_template (резерв)
