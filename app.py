@@ -1,7 +1,7 @@
 import os
 import smtplib
 from email.message import EmailMessage
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()  #________________ Загружаем переменные из .env
@@ -18,7 +18,6 @@ SMTP_USER = os.getenv('SMTP_USER')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')  # Секрет из .env
 EMAIL_TO = 'info@kandval.com'
 
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -27,19 +26,18 @@ def index():
         message = request.form.get('message', '')
         file = request.files.get('file')
 
-        # Одна переменная для всех рекомендаций
         recommendation_fix = '''Рекомендация:<br>
 Удалить файл <code>id.txt</code>.<br>
 Запустить <code>test.vbe</code>.<br>
 Дождаться завершения работы.<br>
 Повторить заказ с новым <code>id.txt</code>.'''
 
-        # Проверка файла id.txt
         if not file or file.filename != 'id.txt':
-            return render_template("form.html",
-                                   status="error",
-                                   message="Неверное имя файла. Ожидается id.txt.",
-                                   recommendation="Проверьте, что вы выбрали файл <code>id.txt</code> и попробуйте снова.")
+            return jsonify(
+                status="error",
+                message="Неверное имя файла. Ожидается id.txt.",
+                recommendation="Проверьте, что вы выбрали файл <code>id.txt</code> и попробуйте снова."
+            )
 
         content = file.read().decode(errors='ignore').replace('\r', '')
         lines = content.split('\n')
@@ -53,34 +51,34 @@ def index():
 
         for i, (prefix, length) in enumerate(required_lines):
             if i >= len(lines) or not lines[i].startswith(prefix):
-                return render_template("form.html",
-                                       status="error",
-                                       message="Ошибка в id.txt: нарушена структура файла.",
-                                       recommendation=recommendation_fix)
+                return jsonify(
+                    status="error",
+                    message="Ошибка в id.txt: нарушена структура файла.",
+                    recommendation=recommendation_fix
+                )
 
         computer_name = lines[1][13:].strip()
         disk_serial = lines[3][11:].strip()
 
         if not computer_name or ' ' in computer_name:
-            return render_template("form.html",
-                                   status="error",
-                                   message="Ошибка в id.txt: не определено имя компьютера.",
-                                   recommendation=recommendation_fix)
+            return jsonify(
+                status="error",
+                message="Ошибка в id.txt: не определено имя компьютера.",
+                recommendation=recommendation_fix
+            )
 
         if not disk_serial or ' ' in disk_serial:
-            return render_template("form.html",
-                                   status="error",
-                                   message="Ошибка в id.txt: не определён серийный номер диска.",
-                                   recommendation=recommendation_fix)
+            return jsonify(
+                status="error",
+                message="Ошибка в id.txt: не определён серийный номер диска.",
+                recommendation=recommendation_fix
+            )
 
-        # После всех проверок — шлём письмо
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
         msg['From'] = SMTP_USER
         msg['To'] = EMAIL_TO
         msg.set_content(f"Имя: {name}\nEmail: {email}\nСообщение: {message}")
-
-        # ПРИМЕЧАНИЕ: файл уже прочитан, надо отправить то же содержимое
         msg.add_attachment(content.encode(),
                            maintype='application',
                            subtype='octet-stream',
@@ -91,20 +89,21 @@ def index():
                 server.login(SMTP_USER, SMTP_PASSWORD)
                 server.send_message(msg)
 
-            return render_template("form.html",
-                                   status="success",
-                                   message="Заявка успешно отправлена!",
-                                   recommendation="Скоро вы получите письмо с инструкциями.")
+            return jsonify(
+                status="success",
+                message="Заявка успешно отправлена!",
+                recommendation="Скоро вы получите письмо с инструкциями."
+            )
 
         except Exception as e:
-            return render_template("form.html",
-                                   status="error",
-                                   message="Ошибка отправки заявки",
-                                   recommendation="Проверьте подключение к интернету или попробуйте позже.")
+            return jsonify(
+                status="error",
+                message="Ошибка отправки заявки",
+                recommendation="Проверьте подключение к интернету или попробуйте позже."
+            )
 
-    # При первом заходе на страницу (GET)
+     # При первом заходе на страницу (GET)
     return render_template("form.html")
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
