@@ -7,8 +7,8 @@
   <style>
     body { font-family: "Segoe UI", sans-serif; padding: 20px; background-color: #f7f7f7; }
     form { width: 90%; max-width: 500px; margin: auto; padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    input, textarea, button, select { width: 100%; padding: 14px 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-    input:focus, textarea:focus, select:focus { border-color: #007BFF; outline: none; }
+    input, textarea, button { width: 100%; padding: 14px 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+    input:focus, textarea:focus { border-color: #007BFF; outline: none; }
     button { background-color: #007BFF; color: #fff; font-weight: bold; border: none; cursor: pointer; }
     button:hover { background-color: #0056b3; box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
     #fileError { color: red; font-size: 0.9em; margin-top: -4px; display: block; min-height: 1.2em; }
@@ -18,45 +18,32 @@
     .close:hover { color:#000; }
     @keyframes fadeIn { from { background-color: rgba(0,0,0,0); } to { background-color: rgba(0,0,0,0.4); } }
     @keyframes slideUp { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    @media (max-width:600px) { body { padding:10px } form { padding:18px } input,textarea,button,select { font-size:16px; padding:12px } .modal-content { margin:30% auto; font-size:15px } }
-    /* Языковой селект */
-    #langSelector { max-width: 200px; margin: 10px auto 20px auto; }
+    @media (max-width:600px) { body { padding:10px } form { padding:18px } input,textarea,button { font-size:16px; padding:12px } .modal-content { margin:30% auto; font-size:15px } }
   </style>
 </head>
 <body>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-  <a href="https://kandval.com" style="font-size:16px; text-decoration:none;">← <span id="backToSiteText"></span></a>
-  <a href="https://kandval.com" style="font-size:24px; text-decoration:none;">✕</a>
+  <a href="https://kandval.com" id="backLink" style="font-size:16px; text-decoration:none;">← Назад на сайт</a>
+  <a href="https://kandval.com" id="closeLink" style="font-size:24px; text-decoration:none;">✕</a>
 </div>
 
-<h2 style="text-align:center;" id="formTitle"></h2>
-
-<!-- Языковой селект -->
-<select id="langSelector" aria-label="Select language">
-  <option value="ru">Русский</option>
-  <option value="en">English</option>
-</select>
-
-<form id="orderForm" action="/" method="post" enctype="multipart/form-data" novalidate>
-  <label for="name" id="nameLabel"></label>
-  <input type="text" id="name" name="name" required autocomplete="name" />
-  
-  <label for="email" id="emailLabel"></label>
-  <input type="email" id="email" name="email" required autocomplete="email" />
-  
-  <label for="message" id="messageLabel"></label>
+<h2 id="formTitle" style="text-align:center;">Заказать рабочую версию</h2>
+<form id="orderForm" action="/" method="post" enctype="multipart/form-data">
+  <label for="name" id="labelName">Имя *</label>
+  <input type="text" id="name" name="name" required />
+  <label for="email" id="labelEmail">Email *</label>
+  <input type="email" id="email" name="email" required />
+  <label for="message" id="labelMessage">Сообщение (необязательно)</label>
   <textarea id="message" name="message" rows="4"></textarea>
-  
-  <label for="file" id="fileLabel"></label>
+  <label for="file" id="labelFile">Загрузите файл (id.txt) *</label>
   <input type="file" id="file" name="file" accept=".txt" required />
   <span id="fileError"></span>
-  
-  <button type="submit" id="submitBtn"></button>
+  <button type="submit" id="submitBtn">Заказать рабочую версию</button>
 </form>
 
 <!-- Модалка -->
-<div id="errorModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalText">
+<div id="errorModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <span class="close" id="closeModal" aria-label="Close">&times;</span>
     <p id="modalText" style="margin-bottom:1em; color:#c00; font-weight:bold;"></p>
@@ -65,199 +52,185 @@
 </div>
 
 <script>
-/* ---- Переводы ---- */
+/* Получаем язык страницы из тега <html lang="..."> */
+const pageLang = document.documentElement.lang || 'ru';
+
+/* Словарь с переводами */
 const translations = {
   ru: {
-    backToSite: "Назад на сайт",
-    formTitle: "Заказать рабочую версию",
-    nameLabel: "Имя *",
-    emailLabel: "Email *",
-    messageLabel: "Сообщение (необязательно)",
-    fileLabel: "Загрузите файл (id.txt) *",
-    submitBtn: "Заказать рабочую версию",
-    closeBtn: "Закрыть",
-    invalidEmail: "Пожалуйста, введите корректный адрес электронной почты (например: name@example.com).",
-    fileError: "Выберите файл id.txt",
-    defaultError: "Произошла ошибка",
-    defaultRecommendation: "Проверьте содержимое файла.",
-    universalRecommendation: `Рекомендация:<br>
+    backLink: '← Назад на сайт',
+    closeLink: '✕',
+    formTitle: 'Заказать рабочую версию',
+    labelName: 'Имя *',
+    labelEmail: 'Email *',
+    labelMessage: 'Сообщение (необязательно)',
+    labelFile: 'Загрузите файл (id.txt) *',
+    submitBtn: 'Заказать рабочую версию',
+    fileErrorSelect: 'Выберите файл id.txt',
+    modalErrorFileStructure: 'Ошибка в id.txt: нарушена структура файла',
+    modalErrorComputerName: 'Ошибка в id.txt: не определено имя компьютера.',
+    modalErrorDiskSerial: 'Ошибка в id.txt: не определён серийный номер диска.',
+    modalErrorEmailInvalid: 'Некорректный email',
+    modalErrorEmailInvalidRecommendation: 'Пожалуйста, введите корректный адрес электронной почты (например: name@example.com).',
+    universalRecommendation: `
+      Рекомендация:<br>
       Удалите <code>id.txt</code>.<br>
       Запустите <code>test.vbe</code>.<br>
       Дождитесь завершения работы.<br>
       Повторите заказ с новым <code>id.txt</code>.`,
-    errorStructure: "Ошибка в id.txt: нарушена структура файла",
-    errorComputerName: "Ошибка в id.txt: не определено имя компьютера.",
-    errorDiskSerial: "Ошибка в id.txt: не определён серийный номер диска.",
-    sendingText: "Отправка...",
-    sendError: "Ошибка отправки заявки.",
-    sendErrorRecommendation: "Проверьте подключение к интернету и попробуйте снова."
+    sendingText: 'Отправка...',
+    unexpectedServerResponse: 'Непредвиденный ответ сервера',
+    sendingError: 'Ошибка отправки запроса.',
+    sendingErrorRecommendation: 'Проверьте подключение к интернету и попробуйте снова.'
   },
   en: {
-    backToSite: "Back to site",
-    formTitle: "Order working version",
-    nameLabel: "Name *",
-    emailLabel: "Email *",
-    messageLabel: "Message (optional)",
-    fileLabel: "Upload file (id.txt) *",
-    submitBtn: "Order working version",
-    closeBtn: "Close",
-    invalidEmail: "Please enter a valid email address (e.g., name@example.com).",
-    fileError: "Please select id.txt file",
-    defaultError: "An error occurred",
-    defaultRecommendation: "Check the file contents.",
-    universalRecommendation: `Recommendation:<br>
+    backLink: '← Back to site',
+    closeLink: '✕',
+    formTitle: 'Order the working version',
+    labelName: 'Name *',
+    labelEmail: 'Email *',
+    labelMessage: 'Message (optional)',
+    labelFile: 'Upload file (id.txt) *',
+    submitBtn: 'Order the working version',
+    fileErrorSelect: 'Please select id.txt file',
+    modalErrorFileStructure: 'Error in id.txt: file structure is broken',
+    modalErrorComputerName: 'Error in id.txt: computer name is missing.',
+    modalErrorDiskSerial: 'Error in id.txt: disk serial number is missing.',
+    modalErrorEmailInvalid: 'Invalid email',
+    modalErrorEmailInvalidRecommendation: 'Please enter a valid email address (e.g. name@example.com).',
+    universalRecommendation: `
+      Recommendation:<br>
       Delete <code>id.txt</code>.<br>
       Run <code>test.vbe</code>.<br>
-      Wait for it to finish.<br>
-      Repeat the request with the new <code>id.txt</code>.`,
-    errorStructure: "Error in id.txt: file structure is broken",
-    errorComputerName: "Error in id.txt: computer name is undefined.",
-    errorDiskSerial: "Error in id.txt: disk serial number is undefined.",
-    sendingText: "Sending...",
-    sendError: "Error sending request.",
-    sendErrorRecommendation: "Check your internet connection and try again."
+      Wait until it finishes.<br>
+      Repeat the order with new <code>id.txt</code>.`,
+    sendingText: 'Sending...',
+    unexpectedServerResponse: 'Unexpected server response',
+    sendingError: 'Error sending request.',
+    sendingErrorRecommendation: 'Check your internet connection and try again.'
   }
 };
 
-/* ---- Переменные и элементы ---- */
-const langSelector = document.getElementById('langSelector');
-const currentLang = { value: 'ru' };
+/* Выбираем переводы по языку */
+const t = translations[pageLang] || translations['ru'];
+
+/* Подставляем переводы в статичные элементы */
+document.getElementById('backLink').textContent = t.backLink;
+document.getElementById('closeLink').textContent = t.closeLink;
+document.getElementById('formTitle').textContent = t.formTitle;
+document.getElementById('labelName').textContent = t.labelName;
+document.getElementById('labelEmail').textContent = t.labelEmail;
+document.getElementById('labelMessage').textContent = t.labelMessage;
+document.getElementById('labelFile').textContent = t.labelFile;
+const submitButton = document.getElementById('submitBtn');
+submitButton.textContent = t.submitBtn;
+
+/* Элементы формы и модалки */
 const form = document.getElementById('orderForm');
 const fileError = document.getElementById('fileError');
 const modal = document.getElementById('errorModal');
 const modalText = document.getElementById('modalText');
 const recommendationText = document.getElementById('recommendationText');
 const closeBtn = document.getElementById('closeModal');
-const submitButton = form.querySelector('button[type="submit"]');
 
-const backToSiteTextElem = document.querySelector('a[href="https://kandval.com"] span#backToSiteText');
-const formTitleElem = document.getElementById('formTitle');
-const nameLabelElem = document.getElementById('nameLabel');
-const emailLabelElem = document.getElementById('emailLabel');
-const messageLabelElem = document.getElementById('messageLabel');
-const fileLabelElem = document.getElementById('fileLabel');
-const submitBtnElem = document.getElementById('submitBtn');
+window.shouldRedirectAfterClose = false;
 
-/* ---- Функция переключения языка ---- */
-function setLanguage(lang) {
-  currentLang.value = lang;
-
-  backToSiteTextElem.textContent = translations[lang].backToSite;
-  formTitleElem.textContent = translations[lang].formTitle;
-  nameLabelElem.textContent = translations[lang].nameLabel;
-  emailLabelElem.textContent = translations[lang].emailLabel;
-  messageLabelElem.textContent = translations[lang].messageLabel;
-  fileLabelElem.textContent = translations[lang].fileLabel;
-  submitBtnElem.textContent = translations[lang].submitBtn;
-  closeBtn.setAttribute('aria-label', translations[lang].closeBtn);
-  fileError.textContent = '';
-
-  // Очистка модалки, если была открыта
-  modalText.textContent = '';
-  recommendationText.innerHTML = '';
+/* Функция скрытия модалки */
+function hideModal() {
   modal.style.display = 'none';
-  modal.setAttribute('aria-hidden', 'true');
+  if (window.shouldRedirectAfterClose) {
+    window.location.href = 'https://kandval.com';
+  }
 }
 
-/* ---- Проверка email (простейшая) ---- */
-function isValidEmail(email) {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-}
+closeBtn.addEventListener('click', hideModal);
+window.addEventListener('click', (event) => {
+  if (event.target === modal) hideModal();
+});
 
-/* ---- Показываем модалку с сообщением ---- */
-function showModal(message, recommendation = '') {
-  modalText.innerHTML = message;
-  recommendationText.innerHTML = recommendation;
+/* Показать модалку */
+function showModal(message, recommendation) {
+  modalText.textContent = message;
+  recommendationText.innerHTML = recommendation || '';
   modal.style.display = 'block';
-  modal.setAttribute('aria-hidden', 'false');
 }
 
-/* ---- Закрытие модалки ---- */
-closeBtn.onclick = () => {
-  modal.style.display = 'none';
-  modal.setAttribute('aria-hidden', 'true');
-};
+/* Основная обработка формы */
+form.addEventListener('submit', function (event) {
+  event.preventDefault();
 
-/* ---- Закрытие модалки кликом вне неё ---- */
-window.onclick = (event) => {
-  if (event.target === modal) {
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
+  const emailInput = form.querySelector('input[name="email"]');
+  const emailValue = (emailInput.value || '').trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(emailValue)) {
+    showModal(t.modalErrorEmailInvalid, t.modalErrorEmailInvalidRecommendation);
+    return;
   }
-};
 
-/* ---- Обработка формы ---- */
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
   fileError.textContent = '';
-
-  const name = form.name.value.trim();
-  const email = form.email.value.trim();
-  const message = form.message.value.trim();
-  const fileInput = form.file;
+  const fileInput = document.getElementById('file');
   const file = fileInput.files[0];
-
-  // Проверка email
-  if (!isValidEmail(email)) {
-    showModal(translations[currentLang.value].invalidEmail);
-    return;
-  }
-
-  // Проверка файла
   if (!file || file.name !== 'id.txt') {
-    fileError.textContent = translations[currentLang.value].fileError;
+    fileError.textContent = t.fileErrorSelect;
     return;
   }
 
-  submitButton.disabled = true;
-  submitButton.textContent = translations[currentLang.value].sendingText;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const content = e.target.result.replace(/\r/g, '');
+    const lines = content.split('\n');
 
-  // Формируем FormData
-  const formData = new FormData();
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('message', message);
-  formData.append('file', file);
+    const requiredPrefixes = [
+      'UserName=',
+      'ComputerName=',
+      'Domain=',
+      'DiskSerial='
+    ];
 
-  try {
-    const response = await fetch('/', {
-      method: 'POST',
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (result.status === 'success') {
-      alert(result.message);
-      form.reset();
-    } else {
-      // Ошибка с универсальным сообщением (как в app.py)
-      showModal(
-        result.message || translations[currentLang.value].defaultError,
-        result.recommendation || translations[currentLang.value].universalRecommendation
-      );
+    for (let i = 0; i < requiredPrefixes.length; i++) {
+      const line = lines[i] || '';
+      if (!line.startsWith(requiredPrefixes[i])) {
+        showModal(t.modalErrorFileStructure, t.universalRecommendation);
+        return;
+      }
     }
-  } catch (error) {
-    showModal(
-      translations[currentLang.value].sendError,
-      translations[currentLang.value].sendErrorRecommendation
-    );
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = translations[currentLang.value].submitBtn;
-  }
-});
 
-/* ---- Переключатель языка ---- */
-langSelector.addEventListener('change', (e) => {
-  setLanguage(e.target.value);
-});
+    const computerNameValue = (lines[1] || '').slice('ComputerName='.length);
+    const diskSerialValue = (lines[3] || '').slice('DiskSerial='.length);
 
-/* ---- Инициализация страницы на русском ---- */
-setLanguage('ru');
+    if (!computerNameValue || computerNameValue.includes(' ')) {
+      showModal(t.modalErrorComputerName, t.universalRecommendation);
+      return;
+    }
+    if (!diskSerialValue || diskSerialValue.includes(' ')) {
+      showModal(t.modalErrorDiskSerial, t.universalRecommendation);
+      return;
+    }
+
+    const formData = new FormData(form);
+    submitButton.disabled = true;
+    submitButton.textContent = t.sendingText;
+
+    fetch('/', { method: 'POST', body: formData })
+      .then(response => response.json().catch(() => ({ status: 'error', message: t.unexpectedServerResponse, recommendation: '' })))
+      .then(data => {
+        showModal(data.message || t.unexpectedServerResponse, data.recommendation || '');
+        window.shouldRedirectAfterClose = (data.status === 'success');
+        submitButton.disabled = false;
+        submitButton.textContent = t.submitBtn;
+      })
+      .catch(() => {
+        showModal(t.sendingError, t.sendingErrorRecommendation);
+        window.shouldRedirectAfterClose = false;
+        submitButton.disabled = false;
+        submitButton.textContent = t.submitBtn;
+      });
+  };
+  reader.readAsText(file);
+});
 </script>
 
 </body>
 </html>
+
 
