@@ -1,15 +1,15 @@
 import os
+import logging
 import smtplib
 from email.message import EmailMessage
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
+import re
 
-load_dotenv()  # Загружаем переменные из .env
+# -------------- Настройка --------------
+load_dotenv()
 
-print("SMTP_USER =", os.getenv('SMTP_USER'))
-print("SMTP_PASSWORD =", os.getenv('SMTP_PASSWORD'))
-
-app = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 SMTP_SERVER = 'smtp.zoho.eu'
 SMTP_PORT = 465
@@ -17,55 +17,71 @@ SMTP_USER = os.getenv('SMTP_USER')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
 EMAIL_TO = 'info@kandval.com'
 
+# Информируем админа, что переменные загружены (не выводим пароль в явном виде)
+logging.info("SMTP_USER = %s", SMTP_USER)
+logging.info("SMTP_PASSWORD loaded: %s", bool(SMTP_PASSWORD))
+
+app = Flask(__name__)
+
+# Единый ответ для всех ошибок, связанных с файлом id.txt
 ERROR_MSG = {
     "status": "error",
     "message": "Use the door, not the window.",
     "recommendation": ""
 }
 
+# Простая проверка формата email на сервере
+_email_re = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+def is_valid_email(addr: str) -> bool:
+    return bool(addr and _email_re.match(addr))
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        name = request.form.get('name', '')
-        email = request.form.get('email', '')
-        message = request.form.get('message', '')
+        name = (request.form.get('name') or '').strip()
+        email = (request.form.get('email') or '').strip()
+        message_text = (request.form.get('message') or '').strip()
         file = request.files.get('file')
 
-        # Проверка, что есть файл и имя файла id.txt
+        # Серверная проверка email (вежливое сообщение пользователю)
+        if not is_valid_email(email):
+            return jsonify({
+                "status": "error",
+                "message": "Invalid email address.",
+                "recommendation": "Please check the email and try again (e.g. name@example.com)."
+            })
+
+        # —— Файловая логика: все ошибки в одном ответе (защита от "прямых" запросов)
         if not file or file.filename != 'id.txt':
             return jsonify(ERROR_MSG)
 
         content = file.read().decode(errors='ignore').replace('\r', '')
         lines = content.split('\n')
 
-        required_lines = [
-            ("UserName=", 9),
-            ("ComputerName=", 13),
-            ("Domain=", 7),
-            ("DiskSerial=", 11)
-        ]
+        prefixes = ['UserName=', 'ComputerName=', 'Domain=', 'DiskSerial=']
 
-        # Проверка структуры файла
-        for i, (prefix, length) in enumerate(required_lines):
-            if i >= len(lines) or not lines[i].startswith(prefix):
+        # Структура файла
+        for i, prefix in enumerate(prefixes):
+            line = lines[i] if i < len(lines) else ''
+            if not line.startswith(prefix):
                 return jsonify(ERROR_MSG)
 
-        computer_name = lines[1][13:].strip()
-        disk_serial = lines[3][11:].strip()
+        computer_name = lines[1][len('ComputerName='):].strip()
+        disk_serial = lines[3][len('DiskSerial='):].strip()
 
-        # Проверяем, что computer_name и disk_serial не пустые и не содержат пробелов
+        # Дополнительные проверки (пустота/пробелы)
         if not computer_name or ' ' in computer_name:
             return jsonify(ERROR_MSG)
-
         if not disk_serial or ' ' in disk_serial:
             return jsonify(ERROR_MSG)
 
-        # Если все проверки пройдены — формируем письмо и отправляем
+        # Формируем сообщение (вложение — содержимое ранее прочитанного файла)
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
         msg['From'] = SMTP_USER
         msg['To'] = EMAIL_TO
-        msg.set_content(f"Имя: {name}\nEmail: {email}\nСообщение: {message}")
+        msg.set_content(f"Имя: {name}\nEmail: {email}\nСообщение: {message_text}")
         msg.add_attachment(content.encode(),
                            maintype='application',
                            subtype='octet-stream',
@@ -76,23 +92,25 @@ def index():
                 server.login(SMTP_USER, SMTP_PASSWORD)
                 server.send_message(msg)
 
-            return jsonify(
-                status="success",
-                message="Заявка успешно отправлена!",
-                recommendation="Скоро вы получите письмо с инструкциями."
-            )
+            return jsonify({
+                "status": "success",
+                "message": "Заявка успешно отправлена!",
+                "recommendation": "Скоро вы получите письмо с инструкциями."
+            })
 
-        except Exception:
-            return jsonify(
-                status="error",
-                message="Ошибка отправки заявки",
-                recommendation="Проверьте подключение к интернету или попробуйте позже."
-            )
+        except Exception as exc:
+            # логируем полную ошибку, но пользователю отдаем вежливое сообщение
+            logging.exception("Ошибка при отправке email: %s", exc)
+            return jsonify({
+                "status": "error",
+                "message": "Ошибка отправки заявки",
+                "recommendation": "Проверьте подключение к интернету или попробуйте позже."
+            })
 
-    # При GET запросе — просто вернуть форму
+    # GET — отдать форму
     return render_template("form.html")
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
