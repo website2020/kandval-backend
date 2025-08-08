@@ -17,66 +17,111 @@ SMTP_USER = os.getenv('SMTP_USER')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
 EMAIL_TO = 'info@kandval.com'
 
-# Информируем админа, что переменные загружены (не выводим пароль в явном виде)
 logging.info("SMTP_USER = %s", SMTP_USER)
 logging.info("SMTP_PASSWORD loaded: %s", bool(SMTP_PASSWORD))
 
 app = Flask(__name__)
 
-# Единый ответ для всех ошибок, связанных с файлом id.txt
-ERROR_MSG = {
-    "status": "error",
-    "message": "Use the door, not the window.",
-    "recommendation": ""
-}
-
-# Простая проверка формата email на сервере
 _email_re = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 def is_valid_email(addr: str) -> bool:
     return bool(addr and _email_re.match(addr))
 
 
+# Мульти-язычные сообщения
+MESSAGES = {
+    "ru": {
+        "success": {
+            "message": "Заявка успешно отправлена!",
+            "recommendation": "Скоро вы получите письмо с инструкциями."
+        },
+        "send_error": {
+            "message": "Ошибка отправки заявки",
+            "recommendation": "Проверьте подключение к интернету или попробуйте позже."
+        },
+        "invalid_email": {
+            "message": "Некорректный адрес электронной почты.",
+            "recommendation": "Пожалуйста, проверьте email и попробуйте снова (например: name@example.com)."
+        },
+        "file_error": {
+            "message": "Используйте дверь, а не окно.",
+            "recommendation": ""
+        }
+    },
+    "en": {
+        "success": {
+            "message": "Request sent successfully!",
+            "recommendation": "You will receive an email with instructions shortly."
+        },
+        "send_error": {
+            "message": "Error sending request",
+            "recommendation": "Check your internet connection or try again later."
+        },
+        "invalid_email": {
+            "message": "Invalid email address.",
+            "recommendation": "Please check the email and try again (e.g., name@example.com)."
+        },
+        "file_error": {
+            "message": "Use the door, not the window.",
+            "recommendation": ""
+        }
+    }
+}
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        # Получаем язык из формы, дефолт - 'en'
+        lang = (request.form.get('lang') or 'en').lower()
+        if lang not in MESSAGES:
+            lang = 'en'
+
+        texts = MESSAGES[lang]
+
         name = (request.form.get('name') or '').strip()
         email = (request.form.get('email') or '').strip()
         message_text = (request.form.get('message') or '').strip()
         file = request.files.get('file')
 
-        # Серверная проверка email (вежливое сообщение пользователю)
+        # Проверка email
         if not is_valid_email(email):
             return jsonify({
                 "status": "error",
-                "message": "Invalid email address.",
-                "recommendation": "Please check the email and try again (e.g. name@example.com)."
+                **texts["invalid_email"]
             })
 
-        # —— Файловая логика: все ошибки в одном ответе (защита от "прямых" запросов)
         if not file or file.filename != 'id.txt':
-            return jsonify(ERROR_MSG)
+            return jsonify({
+                "status": "error",
+                **texts["file_error"]
+            })
 
         content = file.read().decode(errors='ignore').replace('\r', '')
         lines = content.split('\n')
-
         prefixes = ['UserName=', 'ComputerName=', 'Domain=', 'DiskSerial=']
 
-        # Структура файла
         for i, prefix in enumerate(prefixes):
             line = lines[i] if i < len(lines) else ''
             if not line.startswith(prefix):
-                return jsonify(ERROR_MSG)
+                return jsonify({
+                    "status": "error",
+                    **texts["file_error"]
+                })
 
         computer_name = lines[1][len('ComputerName='):].strip()
         disk_serial = lines[3][len('DiskSerial='):].strip()
 
-        # Дополнительные проверки (пустота/пробелы)
         if not computer_name or ' ' in computer_name:
-            return jsonify(ERROR_MSG)
+            return jsonify({
+                "status": "error",
+                **texts["file_error"]
+            })
         if not disk_serial or ' ' in disk_serial:
-            return jsonify(ERROR_MSG)
+            return jsonify({
+                "status": "error",
+                **texts["file_error"]
+            })
 
-        # Формируем сообщение (вложение — содержимое ранее прочитанного файла)
         msg = EmailMessage()
         msg['Subject'] = 'Новая заявка с формы'
         msg['From'] = SMTP_USER
@@ -94,23 +139,20 @@ def index():
 
             return jsonify({
                 "status": "success",
-                "message": "Заявка успешно отправлена!",
-                "recommendation": "Скоро вы получите письмо с инструкциями."
+                **texts["success"]
             })
 
         except Exception as exc:
-            # логируем полную ошибку, но пользователю отдаем вежливое сообщение
             logging.exception("Ошибка при отправке email: %s", exc)
             return jsonify({
                 "status": "error",
-                "message": "Ошибка отправки заявки",
-                "recommendation": "Проверьте подключение к интернету или попробуйте позже."
+                **texts["send_error"]
             })
 
-    # GET — отдать форму
     return render_template("form.html")
 
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
