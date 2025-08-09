@@ -71,16 +71,20 @@ MESSAGES = {
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # <<< добавлено для мультиязычности >>>
         lang = (request.form.get('lang') or 'en').lower()
-        if lang not in MESSAGES:
-            lang = 'en'
-        texts = MESSAGES[lang]
-
         name = (request.form.get('name') or '').strip()
         email = (request.form.get('email') or '').strip()
         message_text = (request.form.get('message') or '').strip()
         file = request.files.get('file')
+    else:
+        lang = (request.args.get('lang') or 'en').lower()
+        # При GET остальные переменные можно не брать или ставить пустыми
+        name = email = message_text = ''
+        file = None
+
+    if lang not in MESSAGES:
+        lang = 'en'
+    texts = MESSAGES[lang]
 
         # Проверка email
         if not is_valid_email(email):
