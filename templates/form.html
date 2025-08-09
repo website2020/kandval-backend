@@ -30,6 +30,7 @@
 
 <h2 id="formTitle" style="text-align:center;">Заказать рабочую версию</h2>
 <form id="orderForm" action="/" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="lang" value="{{ lang }}">
   <label for="name" id="labelName">Имя *</label>
   <input type="text" id="name" name="name" required />
   <label for="email" id="labelEmail">Email *</label>
@@ -159,6 +160,8 @@ function showModal(message, recommendation) {
 form.addEventListener('submit', function (event) {
   event.preventDefault();
 
+  document.getElementById('langInput').value = pageLang;
+
   const emailInput = form.querySelector('input[name="email"]');
   const emailValue = (emailInput.value || '').trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -208,6 +211,8 @@ form.addEventListener('submit', function (event) {
     }
 
     const formData = new FormData(form);
+    formData.set('lang', pageLang);
+ 
     submitButton.disabled = true;
     submitButton.textContent = t.sendingText;
 
