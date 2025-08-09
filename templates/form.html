@@ -53,7 +53,7 @@
 
 <script>
 /* Получаем язык страницы из тега <html lang="..."> */
-const pageLang = document.documentElement.lang || 'ru';
+const pageLang = document.documentElement.lang || 'en';
 
 /* Словарь с переводами */
 const translations = {
@@ -112,7 +112,7 @@ const translations = {
 };
 
 /* Выбираем переводы по языку */
-const t = translations[pageLang] || translations['ru'];
+const t = translations[pageLang] || translations['en'];
 
 /* Подставляем переводы в статичные элементы */
 document.getElementById('backLink').textContent = t.backLink;
@@ -229,7 +229,6 @@ form.addEventListener('submit', function (event) {
   reader.readAsText(file);
 });
 </script>
-
 </body>
 </html>
 
