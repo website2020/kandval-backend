@@ -86,6 +86,7 @@ def index():
         lang = 'en'
     texts = MESSAGES[lang]
 
+    if request.method == 'POST':
         # Проверка email
         if not is_valid_email(email):
             return jsonify({
@@ -153,11 +154,8 @@ def index():
             })
 
     else:
-        # <<< добавлено для мультиязычности >>>
-        lang = request.args.get('lang', 'en').lower()
-        if lang not in MESSAGES:
-            lang = 'en'
-        return render_template("form.html", lang=lang)  # передаём lang в шаблон
+        return render_template("form.html", lang=lang)
+
 
 
 if __name__ == '__main__':
